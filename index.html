@@ -25,11 +25,12 @@
             font-family: 'Press Start 2P', monospace;
         }
 
-        /* Estilo personalizado para canvas y contenedor */
+        /* Estilo personalizado para canvas y contenedor modif Mario */
         #game-container {
             position: relative;
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
+            max-height: 55vh;
             aspect-ratio: 4 / 3;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -260,7 +261,7 @@
         const ctx = canvas.getContext('2d');
 
         const GAME_WIDTH = 800;
-        const GAME_HEIGHT = 600;
+        const GAME_HEIGHT = 500;
 
         let gameState = 'MENU';
         let score = 0;
