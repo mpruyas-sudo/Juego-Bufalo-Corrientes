@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Atrapa el Búfalo en General Paz - Corrientes</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js para música y efectos de sonido arcade/chamamé -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- FontAwesome para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka+One&display=swap');
+
+        body {
+            font-family: 'Fredoka One', cursive, sans-serif;
+            background-color: #1a2e1a;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .font-retro {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* Estilo personalizado para canvas y contenedor */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 4 / 3;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 1rem;
+            background-color: #3b7a3b;
+        }
+
+        /* Efectos de luces y sombras estilo retro arcade */
+        .arcade-btn {
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 0 #1b4311, 0 10px 10px rgba(0,0,0,0.3);
+        }
+        .arcade-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1b4311, 0 4px 5px rgba(0,0,0,0.3);
+        }
+
+        .gold-btn {
+            box-shadow: 0 6px 0 #b37d14, 0 10px 10px rgba(0,0,0,0.3);
+        }
+        .gold-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b37d14, 0 4px 5px rgba(0,0,0,0.3);
+        }
+
+        /* D-Pad y Controles Táctiles Mobile */
+        .touch-btn {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            touch-action: none;
+        }
+        .touch-btn:active, .touch-btn.active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-4 text-white overflow-hidden select-none">
+
+    <!-- Header / Título Principal -->
+    <header class="text-center mb-2 z-10">
+        <h1 class="text-2xl md:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_3px_3px_rgba(0,0,0,0.8)] tracking-wide">
+            🤠 ¡ATRAPA EL BÚFALO EN GENERAL PAZ! 🐃
+        </h1>
+        <p class="text-xs md:text-sm text-yellow-200 drop-shadow font-bold tracking-wider">
+            <i class="fa-solid fa-location-dot text-red-400"></i> Corrientes (Caá Catí)
+        </p>
+    </header>
+
+    <!-- Contenedor del Juego / Canvas -->
+    <div id="game-container" class="relative rounded-2xl overflow-hidden border-4 border-yellow-600 bg-emerald-900">
+        
+        <!-- Canvas HTML5 -->
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <!-- Capa de Interfaz del Juego (HUD) -->
+        <div id="hud" class="absolute top-0 left-0 w-full p-3 flex justify-between items-center pointer-events-none hidden font-retro text-xs md:text-sm z-20">
+            <div class="bg-black/60 backdrop-blur-md px-3 py-2 rounded-xl border border-yellow-500/40 text-yellow-300 flex items-center gap-2">
+                <i class="fa-solid fa-trophy text-yellow-400"></i>
+                <span>PTS: <span id="hud-score" class="text-white">0</span></span>
+            </div>
+            <div class="bg-black/60 backdrop-blur-md px-3 py-2 rounded-xl border border-blue-500/40 text-cyan-300 flex items-center gap-2">
+                <i class="fa-solid fa-clock text-cyan-400"></i>
+                <span>TIEMPO: <span id="hud-time" class="text-white">60</span>s</span>
+            </div>
+            <div class="bg-black/60 backdrop-blur-md px-3 py-2 rounded-xl border border-orange-500/40 text-orange-400 flex items-center gap-2">
+                <i class="fa-solid fa-bullseye"></i>
+                <span>COMBO: <span id="hud-combo" class="text-white">x1</span></span>
+            </div>
+        </div>
+
+        <!-- Notificaciones Flotantes (Power-ups / Textos) -->
+        <div id="toast-container" class="absolute top-16 left-1/2 -translate-x-1/2 pointer-events-none flex flex-col items-center gap-1 z-20"></div>
+
+        <!-- PANTALLA: MENÚ PRINCIPAL -->
+        <div id="screen-menu" class="absolute inset-0 bg-emerald-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-30">
+            <div class="bg-emerald-900/80 border-2 border-yellow-500/50 p-6 rounded-2xl max-w-lg w-full shadow-2xl flex flex-col items-center">
+                <!-- Imagen de presentación del búfalo -->
+                <div class="relative mb-3 group">
+                    <div class="w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-yellow-400 shadow-xl bg-black/60 flex items-center justify-center p-1">
+                        <img src="buffalo.jfif" alt="Búfalo de General Paz" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23232830\'/><path d=\'M25 35 Q15 10 35 20 Q40 38 30 40 Z\' fill=\'%23e2e8f0\'/><path d=\'M75 35 Q85 10 65 20 Q60 38 70 40 Z\' fill=\'%23e2e8f0\'/><circle cx=\'50\' cy=\'55\' r=\'30\' fill=\'%23111827\'/><ellipse cx=\'50\' cy=\'45\' rx=\'20\' ry=\'18\' fill=\'%2394a3b8\'/><circle cx=\'42\' cy=\'50\' r=\'3\' fill=\'%23000\'/><circle cx=\'58\' cy=\'50\' r=\'3\' fill=\'%23000\'/></svg>';">
+                    </div>
+                    <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-emerald-950 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-yellow-200 uppercase tracking-widest shadow">General Paz</span>
+                </div>
+
+                <h2 class="text-3xl font-extrabold text-yellow-400 mb-0.5">ATRAPA EL BÚFALO</h2>
+                <h3 class="text-lg font-bold text-amber-300 mb-3 tracking-wide">Corrientes (Caá Catí)</h3>
+
+                <!-- Instrucciones breves -->
+                <div class="bg-black/40 text-left p-3 rounded-xl text-xs text-emerald-100 space-y-1.5 mb-5 w-full border border-emerald-700">
+                    <p class="font-bold text-yellow-300 border-b border-emerald-700 pb-1">¿Cómo jugar?</p>
+                    <p>🟢 <b>Mover Gaucho:</b> Flechas / WASD / D-Pad táctil.</p>
+                    <p>🟡 <b>Lanzar Lazo:</b> [ESPACIO] o botón "¡LAZO!".</p>
+                    <p>🐃 <b>Búfalos:</b> Tradicional (10p), Rebelde (15p), Leyenda Dorado (25p).</p>
+                    <p>🐊 <b>Peligros:</b> No lazes Yacarés o Carpinchos (-3s y rompe combo).</p>
+                    <p>🧉 <b>Power-ups:</b> Chipá (Velocidad), Mate (+5s Extra), Lazo de Plata (Alcance Total).</p>
+                </div>
+
+                <button id="btn-start" class="arcade-btn w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl border-2 border-emerald-300 uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-play"></i> ¡A Enlazar Chamigo!
+                </button>
+
+                <div class="mt-4 flex items-center gap-2">
+                    <button id="btn-sound-toggle" class="text-xs bg-emerald-800 hover:bg-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-200 cursor-pointer">
+                        <i class="fa-solid fa-volume-high" id="sound-icon"></i> Sonido: ON
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA: GAME OVER / RESULTADOS -->
+        <div id="screen-gameover" class="absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 hidden">
+            <div class="bg-emerald-900/90 border-2 border-yellow-500 p-6 rounded-2xl max-w-md w-full shadow-2xl flex flex-col items-center animate-fade-in">
+                <div id="trophy-icon" class="text-6xl mb-2">🏆</div>
+                <h3 class="text-xl font-bold text-yellow-400 font-retro mb-1">FIN DE LA YERRA</h3>
+                <p id="rank-title" class="text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] mb-4">"Gauchos de Caá Catí"</p>
+
+                <div class="bg-emerald-950/80 w-full p-4 rounded-xl border border-emerald-700 mb-6 space-y-2 text-sm font-retro">
+                    <div class="flex justify-between text-white font-bold">
+                        <span>Búfalos Enlazados:</span>
+                        <span id="res-caught" class="text-white font-extrabold drop-shadow">0</span>
+                    </div>
+                    <div class="flex justify-between text-white font-bold">
+                        <span>Puntaje Total:</span>
+                        <span id="res-score" class="text-white font-extrabold drop-shadow">0</span>
+                    </div>
+                    <div class="flex justify-between text-white font-bold">
+                        <span>Mejor Combo:</span>
+                        <span id="res-combo" class="text-white font-extrabold drop-shadow">x1</span>
+                    </div>
+                </div>
+
+                <button id="btn-restart" class="gold-btn w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-emerald-950 font-bold text-lg rounded-xl border-2 border-yellow-200 uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i> Volver a Intentar
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTROLES TÁCTILES PARA MÓVILES -->
+    <div id="mobile-controls" class="w-full max-w-[900px] mt-3 flex justify-between items-center px-4 gap-4">
+        <!-- D-Pad Directional -->
+        <div class="grid grid-cols-3 gap-1.5 w-36 h-36">
+            <div></div>
+            <button id="btn-up" class="touch-btn"><i class="fa-solid fa-caret-up"></i></button>
+            <div></div>
+            <button id="btn-left" class="touch-btn"><i class="fa-solid fa-caret-left"></i></button>
+            <div class="flex items-center justify-center"><i class="fa-solid fa-horse text-yellow-500/40 text-xl"></i></div>
+            <button id="btn-right" class="touch-btn"><i class="fa-solid fa-caret-right"></i></button>
+            <div></div>
+            <button id="btn-down" class="touch-btn"><i class="fa-solid fa-caret-down"></i></button>
+            <div></div>
+        </div>
+
+        <!-- Botón de Acción Principal (Lazo) -->
+        <div class="flex flex-col items-center">
+            <button id="btn-lasso" class="arcade-btn w-24 h-24 rounded-full bg-yellow-500 active:bg-yellow-400 border-4 border-yellow-200 text-emerald-950 flex flex-col items-center justify-center shadow-lg cursor-pointer">
+                <i class="fa-solid fa-bullseye text-2xl mb-1"></i>
+                <span class="font-extrabold text-xs">¡LAZO!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Referencia al pie del juego -->
+    <footer class="mt-4 text-center">
+        <p class="text-base font-semibold text-gray-400 tracking-wide font-sans">Soft-IT by Lic. Mario A. Pruyas Jaime</p>
+    </footer>
+
+    <!-- LOGIC / GAME ENGINE JS -->
+    <script>
+        // --- MOTOR DE SONIDO (Tone.js) ---
+        let soundEnabled = true;
+        let synth, polySynth, noiseSynth;
+
+        function initAudio() {
+            try {
+                synth = new Tone.Synth().toDestination();
+                polySynth = new Tone.PolySynth().toDestination();
+                polySynth.volume.value = -10;
+                noiseSynth = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination();
+            } catch (e) {
+                console.log("Audio init fallback");
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                const now = Tone.now();
+                if (type === 'lasso') {
+                    synth.triggerAttackRelease("G4", "16n", now);
+                    synth.triggerAttackRelease("D5", "16n", now + 0.04);
+                } else if (type === 'catch') {
+                    polySynth.triggerAttackRelease(["C5", "E5", "G5"], "8n", now);
+                } else if (type === 'gold_catch') {
+                    polySynth.triggerAttackRelease(["G5", "B5", "D6", "F#6"], "8n", now);
+                } else if (type === 'hit') {
+                    noiseSynth.triggerAttackRelease("8n", now);
+                } else if (type === 'powerup') {
+                    polySynth.triggerAttackRelease(["E5", "A5", "C#6"], "16n", now);
+                } else if (type === 'chamame_jingle') {
+                    // Acorde estilo Chamamé correntino sintetizado
+                    polySynth.triggerAttackRelease(["A4", "C#5", "E5"], "8n", now);
+                    polySynth.triggerAttackRelease(["A4", "D5", "F#5"], "8n", now + 0.12);
+                    polySynth.triggerAttackRelease(["E4", "G#4", "B4", "E5"], "4n", now + 0.24);
+                }
+            } catch(e){}
+        }
+
+        // --- CONFIGURACIÓN Y ESTADO DEL JUEGO ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const GAME_WIDTH = 800;
+        const GAME_HEIGHT = 600;
+
+        let gameState = 'MENU';
+        let score = 0;
+        let caughtCount = 0;
+        let timer = 60;
+        let combo = 1;
+        let maxCombo = 1;
+        let timerInterval = null;
+        let animationFrameId = null;
+
+        const keys = {
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+            w: false, s: false, a: false, d: false, Space: false
+        };
+
+        let player;
+        let buffaloes = [];
+        let obstacles = [];
+        let powerups = [];
+        let particles = [];
+
+        // Clase Gaucho (Jugador)
+        class Gaucho {
+            constructor() {
+                this.x = GAME_WIDTH / 2;
+                this.y = GAME_HEIGHT / 2;
+                this.width = 44;
+                this.height = 44;
+                this.baseSpeed = 4.5;
+                this.speed = this.baseSpeed;
+                this.direction = 'down';
+                this.lassoRange = 110;
+                this.lassoActive = false;
+                this.lassoProgress = 0;
+                this.lassoAngle = 0;
+                this.speedBuffTimer = 0;
+                this.rangeBuffTimer = 0;
+            }
+
+            update() {
+                if (this.speedBuffTimer > 0) {
+                    this.speedBuffTimer--;
+                    this.speed = this.baseSpeed * 1.5;
+                } else {
+                    this.speed = this.baseSpeed;
+                }
+
+                if (this.rangeBuffTimer > 0) {
+                    this.rangeBuffTimer--;
+                    this.lassoRange = 180; // Alcance mejorado con Lazo de Plata
+                } else {
+                    this.lassoRange = 110;
+                }
+
+                let moveX = 0;
+                let moveY = 0;
+
+                if (keys.ArrowUp || keys.w) moveY -= 1;
+                if (keys.ArrowDown || keys.s) moveY += 1;
+                if (keys.ArrowLeft || keys.a) moveX -= 1;
+                if (keys.ArrowRight || keys.d) moveX += 1;
+
+                if (moveX !== 0 && moveY !== 0) {
+                    moveX *= 0.7071;
+                    moveY *= 0.7071;
+                }
+
+                this.x += moveX * this.speed;
+                this.y += moveY * this.speed;
+
+                this.x = Math.max(25, Math.min(GAME_WIDTH - 25, this.x));
+                this.y = Math.max(25, Math.min(GAME_HEIGHT - 25, this.y));
+
+                if (moveX > 0) this.direction = 'right';
+                else if (moveX < 0) this.direction = 'left';
+                else if (moveY > 0) this.direction = 'down';
+                else if (moveY < 0) this.direction = 'up';
+
+                if (this.lassoActive) {
+                    const lassoSpeed = this.rangeBuffTimer > 0 ? 0.18 : 0.12;
+                    this.lassoProgress += lassoSpeed;
+                    if (this.lassoProgress >= 1) {
+                        this.lassoActive = false;
+                        this.lassoProgress = 0;
+                    }
+                }
+            }
+
+            throwLasso() {
+                if (this.lassoActive) return;
+                this.lassoActive = true;
+                this.lassoProgress = 0;
+                playSound('lasso');
+
+                switch (this.direction) {
+                    case 'right': this.lassoAngle = 0; break;
+                    case 'down': this.lassoAngle = Math.PI / 2; break;
+                    case 'left': this.lassoAngle = Math.PI; break;
+                    case 'up': this.lassoAngle = -Math.PI / 2; break;
+                }
+
+                const lassoMaxDist = this.lassoRange;
+                const lassoX = this.x + Math.cos(this.lassoAngle) * lassoMaxDist;
+                const lassoY = this.y + Math.sin(this.lassoAngle) * lassoMaxDist;
+
+                let hitIndex = -1;
+                for (let i = 0; i < buffaloes.length; i++) {
+                    const b = buffaloes[i];
+                    const dist = Math.hypot(b.x - lassoX, b.y - lassoY);
+                    if (dist < b.radius + 22) {
+                        hitIndex = i;
+                        break;
+                    }
+                }
+
+                if (hitIndex !== -1) {
+                    const b = buffaloes[hitIndex];
+                    catchBuffalo(b, hitIndex);
+                } else {
+                    // Verificar si enlazó un obstáculo (penalización)
+                    for (let i = 0; i < obstacles.length; i++) {
+                        const obs = obstacles[i];
+                        const dist = Math.hypot(obs.x - lassoX, obs.y - lassoY);
+                        if (dist < obs.radius + 15) {
+                            playSound('hit');
+                            timer = Math.max(0, timer - 3);
+                            combo = 1;
+                            showToast('¡Enlazaste un obstáculo! -3s', 'text-red-400');
+                            updateHUD();
+                            return;
+                        }
+                    }
+                    combo = 1;
+                    updateHUD();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.speedBuffTimer > 0) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 26, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(234, 179, 8, 0.35)';
+                    ctx.fill();
+                }
+
+                // Sombra
+                ctx.beginPath();
+                ctx.ellipse(0, 15, 20, 10, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.fill();
+
+                // Caballo (Cuerpo Retro)
+                ctx.fillStyle = '#8b4513';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                let headX = 0, headY = 0;
+                if (this.direction === 'right') headX = 14;
+                if (this.direction === 'left') headX = -14;
+                if (this.direction === 'down') headY = 12;
+                if (this.direction === 'up') headY = -12;
+
+                ctx.beginPath();
+                ctx.arc(headX, headY, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Gaucho con Poncho y Sombrero
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.arc(0, -4, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#451a03';
+                ctx.beginPath();
+                ctx.ellipse(0, -6, 12, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#dc2626'; // Pañuelo Correntino
+                ctx.beginPath();
+                ctx.arc(0, -1, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+
+                // Lazo en Vuelo
+                if (this.lassoActive) {
+                    ctx.save();
+                    ctx.lineWidth = this.rangeBuffTimer > 0 ? 4 : 3;
+                    ctx.strokeStyle = this.rangeBuffTimer > 0 ? '#e2e8f0' : '#f59e0b'; // Plata o Dorado
+
+                    const currentDist = Math.sin(this.lassoProgress * Math.PI) * this.lassoRange;
+                    const endX = this.x + Math.cos(this.lassoAngle) * currentDist;
+                    const endY = this.y + Math.sin(this.lassoAngle) * currentDist;
+
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.ellipse(endX, endY, 16, 10, this.lassoProgress * 8, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Clase Búfalo
+        class Buffalo {
+            constructor(type = 'common') {
+                this.type = type; // common, fast, golden
+                this.x = Math.random() * (GAME_WIDTH - 120) + 60;
+                this.y = Math.random() * (GAME_HEIGHT - 120) + 60;
+                this.radius = type === 'golden' ? 24 : 18;
+                
+                if (type === 'common') {
+                    this.speed = 1.8 + Math.random() * 1.0;
+                    this.points = 10;
+                    this.color = '#332211';
+                } else if (type === 'fast') { // Búfalo Rebelde
+                    this.speed = 3.6 + Math.random() * 1.2;
+                    this.points = 15;
+                    this.color = '#78350f';
+                } else if (type === 'golden') { // Leyenda de Caá Catí
+                    this.speed = 2.4;
+                    this.points = 25;
+                    this.color = '#eab308';
+                }
+
+                this.angle = Math.random() * Math.PI * 2;
+                this.changeDirTimer = 0;
+            }
+
+            update() {
+                this.changeDirTimer--;
+                if (this.changeDirTimer <= 0) {
+                    this.angle += (Math.random() - 0.5) * 1.5;
+                    this.changeDirTimer = Math.floor(Math.random() * 60) + 30;
+                }
+
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+
+                if (this.x < 30 || this.x > GAME_WIDTH - 30) this.angle = Math.PI - this.angle;
+                if (this.y < 30 || this.y > GAME_HEIGHT - 30) this.angle = -this.angle;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                ctx.beginPath();
+                ctx.ellipse(0, 12, this.radius, this.radius / 2, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+
+                // Cuernos de Búfalo
+                ctx.strokeStyle = '#f8fafc';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(-8, -10, 12, Math.PI * 0.8, Math.PI * 1.6);
+                ctx.arc(8, -10, 12, Math.PI * 1.4, Math.PI * 0.2);
+                ctx.stroke();
+
+                ctx.fillStyle = this.type === 'golden' ? '#ffffff' : '#fef08a';
+                ctx.beginPath();
+                ctx.arc(-6, -2, 3, 0, Math.PI * 2);
+                ctx.arc(6, -2, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.ellipse(0, 5, 7, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Clase Obstáculo (Yacaré o Carpincho)
+        class Obstacle {
+            constructor(type) {
+                this.type = type; // 'yacare' or 'carpincho'
+                this.x = Math.random() * (GAME_WIDTH - 140) + 70;
+                this.y = Math.random() * (GAME_HEIGHT - 140) + 70;
+                this.radius = 20;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.type === 'yacare') {
+                    ctx.fillStyle = '#15803d';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 22, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#facc15';
+                    ctx.beginPath();
+                    ctx.arc(-8, -6, 3, 0, Math.PI * 2);
+                    ctx.arc(8, -6, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#a16207';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(8, -8, 10, 12);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Clase Power-up (Chipá, Mate o Lazo de Plata)
+        class PowerUp {
+            constructor(type) {
+                this.type = type; // 'chipa' (speed), 'mate' (time), 'lazo_plata' (range)
+                this.x = Math.random() * (GAME_WIDTH - 120) + 60;
+                this.y = Math.random() * (GAME_HEIGHT - 120) + 60;
+                this.radius = 16;
+                this.life = 320;
+            }
+
+            update() {
+                this.life--;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.fill();
+
+                if (this.type === 'chipa') {
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(-2, -2, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'mate') {
+                    ctx.fillStyle = '#78350f';
+                    ctx.beginPath();
+                    ctx.arc(0, 2, 9, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#15803d';
+                    ctx.beginPath();
+                    ctx.arc(0, -1, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(2, 0);
+                    ctx.lineTo(8, -10);
+                    ctx.stroke();
+                } else if (this.type === 'lazo_plata') {
+                    ctx.strokeStyle = '#f8fafc';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.beginPath();
+                    ctx.arc(4, -4, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Partículas
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.alpha = 1;
+                this.size = Math.random() * 5 + 3;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.03;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function showToast(text, colorClass = 'text-yellow-400') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-yellow-500/40 text-xs font-retro ${colorClass} animate-bounce`;
+            toast.innerText = text;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 1200);
+        }
+
+        // --- DIBUJO DEL ESCENARIO ---
+        function drawBackground() {
+            // Fondo de Esteros con Atardecer Retro Correntino
+            const grad = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            grad.addColorStop(0, '#166534');
+            grad.addColorStop(1, '#14532d');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // Lagunas de Esteros del Iberá
+            ctx.fillStyle = '#1e3a8a';
+            ctx.beginPath();
+            ctx.ellipse(150, 120, 90, 45, 0.2, 0, Math.PI * 2);
+            ctx.ellipse(650, 480, 110, 55, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.arc(140, 120, 15, 0, Math.PI * 2);
+            ctx.arc(660, 470, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Palmeras Caranday
+            drawPalmera(80, 80);
+            drawPalmera(720, 100);
+            drawPalmera(70, 500);
+            drawPalmera(740, 520);
+        }
+
+        function drawPalmera(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(0, 20);
+            ctx.quadraticCurveTo(5, 0, 0, -25);
+            ctx.stroke();
+
+            ctx.fillStyle = '#166534';
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.ellipse(0, -25, 18, 5, (i * Math.PI) / 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // --- INTERACCIÓN ---
+        function catchBuffalo(buffalo, index) {
+            score += buffalo.points * combo;
+            caughtCount++;
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+
+            for (let i = 0; i < 12; i++) {
+                particles.push(new Particle(buffalo.x, buffalo.y, buffalo.color));
+            }
+
+            if (buffalo.type === 'golden') {
+                playSound('gold_catch');
+                showToast(`¡LEYENDA DE CAÁ CATÍ! +${buffalo.points * (combo - 1)} PTS`, 'text-yellow-300');
+            } else {
+                playSound('catch');
+                showToast(`¡ENLAZADO! +${buffalo.points * (combo - 1)}`, 'text-emerald-300');
+            }
+
+            buffaloes.splice(index, 1);
+            spawnBuffalo();
+
+            if (Math.random() < 0.35) {
+                spawnPowerUp();
+            }
+
+            updateHUD();
+        }
+
+        function checkObstacleCollisions() {
+            for (let obs of obstacles) {
+                const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
+                if (dist < player.width / 2 + obs.radius) {
+                    playSound('hit');
+                    timer = Math.max(0, timer - 3);
+                    combo = 1;
+                    showToast('¡Cuidado con el yacaré! -3s', 'text-red-400');
+                    player.x += (player.x - obs.x) * 0.5;
+                    player.y += (player.y - obs.y) * 0.5;
+                    updateHUD();
+                    break;
+                }
+            }
+        }
+
+        function checkPowerUpCollisions() {
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const p = powerups[i];
+                const dist = Math.hypot(player.x - p.x, player.y - p.y);
+                if (dist < player.width / 2 + p.radius) {
+                    playSound('powerup');
+                    if (p.type === 'chipa') {
+                        player.speedBuffTimer = 300;
+                        showToast('¡CHIPÁ VELOZ!', 'text-amber-400');
+                    } else if (p.type === 'mate') {
+                        timer += 5;
+                        showToast('¡MATE ENERGIZANTE! +5s', 'text-emerald-400');
+                    } else if (p.type === 'lazo_plata') {
+                        player.rangeBuffTimer = 350;
+                        showToast('¡LAZO DE PLATA!', 'text-cyan-300');
+                    }
+                    powerups.splice(i, 1);
+                    updateHUD();
+                }
+            }
+        }
+
+        function spawnBuffalo() {
+            const rand = Math.random();
+            let type = 'common';
+            if (rand > 0.82) type = 'golden';
+            else if (rand > 0.52) type = 'fast';
+
+            buffaloes.push(new Buffalo(type));
+        }
+
+        function spawnPowerUp() {
+            if (powerups.length >= 2) return;
+            const rand = Math.random();
+            let type = 'chipa';
+            if (rand > 0.6) type = 'mate';
+            else if (rand > 0.3) type = 'lazo_plata';
+
+            powerups.push(new PowerUp(type));
+        }
+
+        // --- GAME LOOP ---
+        function gameLoop() {
+            if (gameState !== 'PLAYING') return;
+
+            player.update();
+            buffaloes.forEach(b => b.update());
+
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                powerups[i].update();
+                if (powerups[i].life <= 0) powerups.splice(i, 1);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            checkObstacleCollisions();
+            checkPowerUpCollisions();
+
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            drawBackground();
+
+            obstacles.forEach(o => o.draw());
+            powerups.forEach(p => p.draw());
+            buffaloes.forEach(b => b.draw());
+            player.draw();
+            particles.forEach(pt => pt.draw());
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = score;
+            document.getElementById('hud-time').innerText = timer;
+            document.getElementById('hud-combo').innerText = `x${combo}`;
+        }
+
+        function startGame() {
+            initAudio();
+            gameState = 'PLAYING';
+            score = 0;
+            caughtCount = 0;
+            timer = 60;
+            combo = 1;
+            maxCombo = 1;
+
+            player = new Gaucho();
+            buffaloes = [];
+            obstacles = [];
+            powerups = [];
+            particles = [];
+
+            for (let i = 0; i < 6; i++) spawnBuffalo();
+            
+            obstacles.push(new Obstacle('yacare'));
+            obstacles.push(new Obstacle('yacare'));
+            obstacles.push(new Obstacle('carpincho'));
+
+            document.getElementById('screen-menu').classList.add('hidden');
+            document.getElementById('screen-gameover').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+
+            updateHUD();
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    timer--;
+                    updateHUD();
+                    if (timer <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+
+            playSound('chamame_jingle');
+            cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function endGame() {
+            gameState = 'GAMEOVER';
+            clearInterval(timerInterval);
+
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('screen-gameover').classList.remove('hidden');
+
+            let rank = "Gauchos de Caá Catí";
+            let trophy = "🤠";
+            if (score >= 420) {
+                rank = "👑 Leyenda de General Paz";
+                trophy = "🏆";
+            } else if (score >= 260) {
+                rank = "🌟 Lassador de los Esteros";
+                trophy = "🥇";
+            } else if (score >= 130) {
+                rank = "🐎 Gauchos de Caá Catí";
+                trophy = "🥈";
+            }
+
+            document.getElementById('trophy-icon').innerText = trophy;
+            document.getElementById('rank-title').innerText = `"${rank}"`;
+            document.getElementById('res-caught').innerText = caughtCount;
+            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-combo').innerText = `x${maxCombo}`;
+
+            playSound('chamame_jingle');
+        }
+
+        // --- CONTROLES TECLADO Y TOUCH ---
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (gameState === 'PLAYING') player.throwLasso();
+            }
+            if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
+                keys[e.key] = true;
+                keys[e.code] = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(e.code)) {
+                keys[e.key] = false;
+                keys[e.code] = false;
+            }
+        });
+
+        function bindTouchBtn(btnId, keyName) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+
+            const startAction = (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                if (keyName === 'Space') {
+                    if (gameState === 'PLAYING') player.throwLasso();
+                } else {
+                    keys[keyName] = true;
+                }
+            };
+
+            const endAction = (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+                if (keyName !== 'Space') {
+                    keys[keyName] = false;
+                }
+            };
+
+            btn.addEventListener('touchstart', startAction);
+            btn.addEventListener('touchend', endAction);
+            btn.addEventListener('mousedown', startAction);
+            btn.addEventListener('mouseup', endAction);
+        }
+
+        bindTouchBtn('btn-up', 'ArrowUp');
+        bindTouchBtn('btn-down', 'ArrowDown');
+        bindTouchBtn('btn-left', 'ArrowLeft');
+        bindTouchBtn('btn-right', 'ArrowRight');
+        bindTouchBtn('btn-lasso', 'Space');
+
+        document.getElementById('btn-start').addEventListener('click', startGame);
+        document.getElementById('btn-restart').addEventListener('click', startGame);
+
+        document.getElementById('btn-sound-toggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('btn-sound-toggle');
+            if (soundEnabled) {
+                btn.innerHTML = `<i class="fa-solid fa-volume-high" id="sound-icon"></i> Sonido: ON`;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-volume-xmark" id="sound-icon"></i> Sonido: OFF`;
+            }
+        });
+
+        drawBackground();
+    </script>
+</body>
+</html>
