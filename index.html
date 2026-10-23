@@ -34,19 +34,35 @@
             font-family: 'Press Start 2P', monospace;
         }
 
+        /* ANIMACIÓN DE TITILEO / PARPADEO PARA EL TÍTULO */
+        @keyframes arcadeBlink {
+            0%, 100% {
+                opacity: 1;
+                filter: brightness(1.2) drop-shadow(0 0 8px rgba(250, 204, 21, 0.8));
+            }
+            50% {
+                opacity: 0.35;
+                filter: brightness(0.8) drop-shadow(0 0 2px rgba(250, 204, 21, 0.2));
+            }
+        }
+
+        .blink-title {
+            animation: arcadeBlink 1.2s infinite ease-in-out;
+        }
+
         /* Estilo personalizado para canvas y contenedor responsivo */
         #game-container {
             position: relative;
             width: 100%;
             max-width: 800px;
-            max-height: 42dvh; /* Adaptado para asegurar la visibilidad completa del pad y firma en móviles */
+            max-height: 42dvh;
             aspect-ratio: 4 / 3;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-top: 0.1rem;
-            margin-bottom: 4.8rem; /* Espacio exacto reservado para los controles */
+            margin-bottom: 4.8rem;
         }
 
         @media (min-height: 650px) {
@@ -155,13 +171,13 @@
 </head>
 <body class="h-screen w-screen flex flex-col justify-start items-center p-1 text-white overflow-hidden select-none">
 
-    <!-- Header / Título Principal -->
+    <!-- Header / Título Principal con animación de titileo -->
     <header class="text-center py-0.5 z-10 shrink-0 mb-0.5">
-        <h1 class="text-base sm:text-2xl md:text-3xl font-extrabold text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide leading-tight">
+        <h1 class="blink-title text-base sm:text-2xl md:text-3xl font-extrabold text-yellow-400 tracking-wide leading-tight">
             🤠 ¡ATRAPA EL BÚFALO EN GENERAL PAZ! 🐃
         </h1>
         <p class="text-[9px] sm:text-xs text-yellow-200 drop-shadow font-bold tracking-wider">
-            <i class="fa-solid fa-location-dot text-red-400"></i> Capital Provincial del Búfalo
+            <i class="fa-solid fa-location-dot text-red-400"></i> Capital provincial del Búfalo
         </p>
     </header>
 
@@ -212,7 +228,7 @@
                     <p>🟡 <b>Lanzar Lazo:</b> [ESPACIO] o botón "LAZO" central.</p>
                     <p>🐃 <b>Búfalos:</b> Tradicional (10p), Rebelde (15p), Leyenda (25p).</p>
                     <p>🐊 <b>Peligros:</b> Yacarés / Carpinchos (-3s y corta combo).</p>
-                    <p>M <b>Power-ups:</b> Chipá (Velocidad), Mate (+5s), Lazo Plata.</p>
+                    <p>🧉 <b>Power-ups:</b> Chipá (Velocidad), Mate (+5s), Lazo Plata.</p>
                 </div>
 
                 <button id="btn-start" class="arcade-btn w-full py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl border-2 border-emerald-300 uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
@@ -276,7 +292,7 @@
 
     </div>
 
-    <!-- REFERENCIA AL PIE DEL JUEGO (FIRMA VISIBLE DIRECTAMENTE DEBAJO DEL D-PAD) -->
+    <!-- REFERENCIA AL PIE DEL JUEGO -->
     <footer class="w-full text-center shrink-0 z-50 pt-1 pb-2">
         <p class="text-[10px] sm:text-xs text-gray-300 font-bold tracking-wide font-sans drop-shadow-md">
             Soft-IT by Lic. Mario Pruyas Jaime
