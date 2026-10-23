@@ -6,7 +6,7 @@
     <title>Atrapa el Búfalo en General Paz - Corrientes</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tone.js para música y efectos de sonido arcade/chamamé -->
+    <!-- Tone.js para efectos de sonido arcade/chamamé -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <!-- FontAwesome para íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -155,7 +155,7 @@
 </head>
 <body class="h-screen w-screen flex flex-col justify-start items-center p-1 text-white overflow-hidden select-none">
 
-    <!-- Header / Título Principal (Sin parpadeo) -->
+    <!-- Header / Título Principal -->
     <header class="text-center py-0.5 z-10 shrink-0 mb-0.5">
         <h1 class="text-base sm:text-2xl md:text-3xl font-extrabold text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide leading-tight">
             🤠 ¡ATRAPA EL BÚFALO EN GENERAL PAZ! 🐃
@@ -285,10 +285,14 @@
 
     <!-- LOGIC / GAME ENGINE JS -->
     <script>
-        // --- MOTOR DE SONIDO (Tone.js) ---
+        // --- MOTOR DE SONIDO (Tone.js + Audio HTML5) ---
         let soundEnabled = true;
-        let synth, polySynth, noiseSynth, accordionSynth;
-        let bgMusicSequence = null;
+        let synth, polySynth, noiseSynth;
+        
+        // Carga el archivo enganchados.mp3 de fondo
+        const bgAudio = new Audio('enganchados.mp3');
+        bgAudio.loop = true;
+        bgAudio.volume = 0.4;
 
         function initAudio() {
             try {
@@ -296,25 +300,29 @@
                 polySynth = new Tone.PolySynth().toDestination();
                 polySynth.volume.value = -10;
                 noiseSynth = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination();
-
-                // Sintetizador estilo Acordeón Chamamecero para "Mi General Paz"
-                accordionSynth = new Tone.PolySynth(Tone.Synth, {
-                    oscillator: { type: "triangle" },
-                    envelope: { attack: 0.05, decay: 0.2, sustain: 0.6, release: 0.3 }
-                }).toDestination();
-                accordionSynth.volume.value = -14;
-
             } catch (e) {
                 console.log("Audio init fallback");
             }
         }
 
-        // --- EFECTO SAPUKAY Y MÚSICA "MI GENERAL PAZ" ---
+        // --- REPRODUCCIÓN DE MÚSICA DE FONDO ---
+        function startBackgroundMusic() {
+            if (!soundEnabled) return;
+            bgAudio.currentTime = 0;
+            bgAudio.play().catch(e => console.log("Audio play error:", e));
+        }
+
+        function stopBackgroundMusic() {
+            if (bgAudio) {
+                bgAudio.pause();
+            }
+        }
+
+        // --- EFECTO SAPUKAY CORRENTINO ---
         function playSapukay() {
             if (!soundEnabled) return;
             try {
                 const now = Tone.now();
-                // Sintetiza el tono ascendente y eufórico del Sapukay correntino
                 const sapukaySynth = new Tone.Synth({
                     oscillator: { type: "sawtooth" },
                     envelope: { attack: 0.1, decay: 0.4, sustain: 0.7, release: 0.6 }
@@ -328,44 +336,6 @@
                 sapukaySynth.triggerAttackRelease("A5", "2n", now + 0.9);
                 showToast("¡¡¡SAPUKAY!!! 🤠🪗", "text-yellow-300");
             } catch(e){}
-        }
-
-        function startBackgroundChamame() {
-            if (!soundEnabled || !accordionSynth) return;
-            stopBackgroundChamame();
-
-            // Melodía chamamecera inspirada en "Mi General Paz" (Úbeda - Chávez) en tiempo 3/4 (Chamamé)
-            const melody = [
-                { time: "0:0", note: ["A4", "C#5"], duration: "8n" },
-                { time: "0:1", note: ["E5", "A5"], duration: "8n" },
-                { time: "0:2", note: ["C#5", "E5"], duration: "8n" },
-                { time: "1:0", note: ["G4", "B4"], duration: "8n" },
-                { time: "1:1", note: ["D5", "G5"], duration: "8n" },
-                { time: "1:2", note: ["B4", "D5"], duration: "8n" },
-                { time: "2:0", note: ["A4", "C#5"], duration: "4n" },
-                { time: "2:2", note: ["E5", "A5"], duration: "8n" },
-                { time: "3:0", note: ["E4", "G#4"], duration: "8n" },
-                { time: "3:1", note: ["B4", "E5"], duration: "8n" },
-                { time: "3:2", note: ["G#4", "B4"], duration: "8n" },
-            ];
-
-            Tone.Transport.bpm.value = 128; // Ritmo clásico de Chamamé
-            bgMusicSequence = new Tone.Part((time, value) => {
-                accordionSynth.triggerAttackRelease(value.note, value.duration, time);
-            }, melody).start(0);
-
-            bgMusicSequence.loop = true;
-            bgMusicSequence.loopEnd = "4:0";
-            Tone.Transport.start();
-        }
-
-        function stopBackgroundChamame() {
-            if (bgMusicSequence) {
-                bgMusicSequence.stop();
-                bgMusicSequence.dispose();
-                bgMusicSequence = null;
-            }
-            Tone.Transport.stop();
         }
 
         function playSound(type) {
@@ -1025,7 +995,7 @@
             }, 1000);
 
             playSapukay();
-            startBackgroundChamame();
+            startBackgroundMusic();
 
             cancelAnimationFrame(animationFrameId);
             gameLoop();
@@ -1034,7 +1004,7 @@
         function endGame() {
             gameState = 'GAMEOVER';
             clearInterval(timerInterval);
-            stopBackgroundChamame();
+            stopBackgroundMusic();
 
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('screen-gameover').classList.remove('hidden');
@@ -1120,10 +1090,10 @@
             const btn = document.getElementById('btn-sound-toggle');
             if (soundEnabled) {
                 btn.innerHTML = `<i class="fa-solid fa-volume-high" id="sound-icon"></i> Sonido: ON`;
-                if (gameState === 'PLAYING') startBackgroundChamame();
+                if (gameState === 'PLAYING') startBackgroundMusic();
             } else {
                 btn.innerHTML = `<i class="fa-solid fa-volume-xmark" id="sound-icon"></i> Sonido: OFF`;
-                stopBackgroundChamame();
+                stopBackgroundMusic();
             }
         });
 
