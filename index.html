@@ -39,19 +39,25 @@
             position: relative;
             width: 100%;
             max-width: 800px;
-            max-height: 50dvh;
+            max-height: 42dvh; /* Adaptado para asegurar la visibilidad completa del pad y firma en móviles */
             aspect-ratio: 4 / 3;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 0.2rem;
-            margin-bottom: 5.5rem; /* Margen para albergar los controles sin pisar nada */
+            margin-top: 0.1rem;
+            margin-bottom: 4.8rem; /* Espacio exacto reservado para los controles */
         }
 
-        @media (min-height: 700px) {
+        @media (min-height: 650px) {
             #game-container {
-                max-height: 56dvh;
+                max-height: 48dvh;
+            }
+        }
+
+        @media (min-height: 800px) {
+            #game-container {
+                max-height: 54dvh;
             }
         }
 
@@ -125,14 +131,14 @@
             position: absolute;
             bottom: -5.5rem;
             z-index: 40;
-            width: 7.8rem;
-            height: 7.8rem;
+            width: 7.2rem;
+            height: 7.2rem;
         }
 
-        @media (max-height: 650px) {
+        @media (min-height: 700px) {
             .dpad-container {
-                width: 6.8rem;
-                height: 6.8rem;
+                width: 7.8rem;
+                height: 7.8rem;
                 bottom: -5.8rem;
             }
         }
@@ -147,7 +153,7 @@
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-start items-center p-1.5 text-white overflow-hidden select-none">
+<body class="h-screen w-screen flex flex-col justify-start items-center p-1 text-white overflow-hidden select-none">
 
     <!-- Header / Título Principal -->
     <header class="text-center py-0.5 z-10 shrink-0 mb-0.5">
@@ -186,7 +192,7 @@
 
         <!-- PANTALLA: MENÚ PRINCIPAL -->
         <div id="screen-menu" class="absolute inset-0 bg-emerald-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center z-30">
-            <div class="bg-emerald-900/90 border-2 border-yellow-500/50 p-2.5 sm:p-4 rounded-2xl max-w-sm sm:max-w-md w-full shadow-2xl flex flex-col items-center max-h-full overflow-y-auto custom-scroll">
+            <div class="bg-emerald-900/90 border-2 border-yellow-500/50 p-2 sm:p-4 rounded-2xl max-w-sm sm:max-w-md w-full shadow-2xl flex flex-col items-center max-h-full overflow-y-auto custom-scroll">
                 
                 <!-- Imagen de presentación del búfalo -->
                 <div class="relative mb-1 shrink-0">
@@ -197,23 +203,23 @@
                 </div>
 
                 <h2 class="text-base sm:text-xl font-extrabold text-yellow-400 leading-tight">ATRAPA EL BÚFALO</h2>
-                <h3 class="text-[10px] sm:text-xs font-bold text-amber-300 mb-1.5 tracking-wide">Corrientes (Caá Catí)</h3>
+                <h3 class="text-[10px] sm:text-xs font-bold text-amber-300 mb-1 tracking-wide">Corrientes (Caá Catí)</h3>
 
                 <!-- Instrucciones breves -->
-                <div class="bg-black/40 text-left p-2 rounded-xl text-[9px] sm:text-xs text-emerald-100 space-y-0.5 mb-2 w-full border border-emerald-700 leading-tight">
+                <div class="bg-black/40 text-left p-2 rounded-xl text-[9px] sm:text-xs text-emerald-100 space-y-0.5 mb-1.5 w-full border border-emerald-700 leading-tight">
                     <p class="font-bold text-yellow-300 border-b border-emerald-700 pb-0.5 text-xs sm:text-sm">¿Cómo jugar?</p>
                     <p>🟢 <b>Mover Gaucho:</b> Flechas / WASD / D-Pad.</p>
                     <p>🟡 <b>Lanzar Lazo:</b> [ESPACIO] o botón "LAZO" central.</p>
                     <p>🐃 <b>Búfalos:</b> Tradicional (10p), Rebelde (15p), Leyenda (25p).</p>
                     <p>🐊 <b>Peligros:</b> Yacarés / Carpinchos (-3s y corta combo).</p>
-                    <p>🧉 <b>Power-ups:</b> Chipá (Velocidad), Mate (+5s), Lazo Plata.</p>
+                    <p>M <b>Power-ups:</b> Chipá (Velocidad), Mate (+5s), Lazo Plata.</p>
                 </div>
 
-                <button id="btn-start" class="arcade-btn w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl border-2 border-emerald-300 uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
+                <button id="btn-start" class="arcade-btn w-full py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl border-2 border-emerald-300 uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
                     <i class="fa-solid fa-play"></i> ¡A Enlazar Chamigo!
                 </button>
 
-                <div class="mt-1.5 flex items-center gap-2 shrink-0">
+                <div class="mt-1 flex items-center gap-2 shrink-0">
                     <button id="btn-sound-toggle" class="text-[9px] sm:text-xs bg-emerald-800 hover:bg-emerald-700 px-2 py-0.5 rounded-lg border border-emerald-600 text-emerald-200 cursor-pointer">
                         <i class="fa-solid fa-volume-high" id="sound-icon"></i> Sonido: ON
                     </button>
@@ -243,7 +249,7 @@
                     </div>
                 </div>
 
-                <button id="btn-restart" class="gold-btn w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 text-emerald-950 font-bold text-xs sm:text-sm rounded-xl border-2 border-yellow-200 uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
+                <button id="btn-restart" class="gold-btn w-full py-2 bg-yellow-500 hover:bg-yellow-400 text-emerald-950 font-bold text-xs sm:text-sm rounded-xl border-2 border-yellow-200 uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-rotate-right"></i> Volver a Intentar
                 </button>
             </div>
@@ -270,9 +276,11 @@
 
     </div>
 
-    <!-- Referencia al pie del juego (subida justo debajo de los controles) -->
-    <footer class="py-1 text-center shrink-0 -mt-1 z-50">
-        <p class="text-[10px] text-gray-300 font-medium tracking-wide font-sans drop-shadow">Soft-IT by Lic. Mario Pruyas Jaime</p>
+    <!-- REFERENCIA AL PIE DEL JUEGO (FIRMA VISIBLE DIRECTAMENTE DEBAJO DEL D-PAD) -->
+    <footer class="w-full text-center shrink-0 z-50 pt-1 pb-2">
+        <p class="text-[10px] sm:text-xs text-gray-300 font-bold tracking-wide font-sans drop-shadow-md">
+            Soft-IT by Lic. Mario Pruyas Jaime
+        </p>
     </footer>
 
     <!-- LOGIC / GAME ENGINE JS -->
