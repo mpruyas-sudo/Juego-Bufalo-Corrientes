@@ -34,22 +34,6 @@
             font-family: 'Press Start 2P', monospace;
         }
 
-        /* ANIMACIÓN DE TITILEO / PARPADEO PARA EL TÍTULO */
-        @keyframes arcadeBlink {
-            0%, 100% {
-                opacity: 1;
-                filter: brightness(1.2) drop-shadow(0 0 8px rgba(250, 204, 21, 0.8));
-            }
-            50% {
-                opacity: 0.35;
-                filter: brightness(0.8) drop-shadow(0 0 2px rgba(250, 204, 21, 0.2));
-            }
-        }
-
-        .blink-title {
-            animation: arcadeBlink 1.2s infinite ease-in-out;
-        }
-
         /* Estilo personalizado para canvas y contenedor responsivo */
         #game-container {
             position: relative;
@@ -171,13 +155,13 @@
 </head>
 <body class="h-screen w-screen flex flex-col justify-start items-center p-1 text-white overflow-hidden select-none">
 
-    <!-- Header / Título Principal con animación de titileo -->
+    <!-- Header / Título Principal (Sin parpadeo) -->
     <header class="text-center py-0.5 z-10 shrink-0 mb-0.5">
-        <h1 class="blink-title text-base sm:text-2xl md:text-3xl font-extrabold text-yellow-400 tracking-wide leading-tight">
+        <h1 class="text-base sm:text-2xl md:text-3xl font-extrabold text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide leading-tight">
             🤠 ¡ATRAPA EL BÚFALO EN GENERAL PAZ! 🐃
         </h1>
         <p class="text-[9px] sm:text-xs text-yellow-200 drop-shadow font-bold tracking-wider">
-            <i class="fa-solid fa-location-dot text-red-400"></i> Corrientes (Caá Catí)
+            <i class="fa-solid fa-location-dot text-red-400"></i> Capital Provincial del Búfalo
         </p>
     </header>
 
@@ -303,7 +287,8 @@
     <script>
         // --- MOTOR DE SONIDO (Tone.js) ---
         let soundEnabled = true;
-        let synth, polySynth, noiseSynth;
+        let synth, polySynth, noiseSynth, accordionSynth;
+        let bgMusicSequence = null;
 
         function initAudio() {
             try {
@@ -311,9 +296,76 @@
                 polySynth = new Tone.PolySynth().toDestination();
                 polySynth.volume.value = -10;
                 noiseSynth = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination();
+
+                // Sintetizador estilo Acordeón Chamamecero para "Mi General Paz"
+                accordionSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.05, decay: 0.2, sustain: 0.6, release: 0.3 }
+                }).toDestination();
+                accordionSynth.volume.value = -14;
+
             } catch (e) {
                 console.log("Audio init fallback");
             }
+        }
+
+        // --- EFECTO SAPUKAY Y MÚSICA "MI GENERAL PAZ" ---
+        function playSapukay() {
+            if (!soundEnabled) return;
+            try {
+                const now = Tone.now();
+                // Sintetiza el tono ascendente y eufórico del Sapukay correntino
+                const sapukaySynth = new Tone.Synth({
+                    oscillator: { type: "sawtooth" },
+                    envelope: { attack: 0.1, decay: 0.4, sustain: 0.7, release: 0.6 }
+                }).toDestination();
+                sapukaySynth.volume.value = -6;
+
+                sapukaySynth.triggerAttackRelease("A4", "8n", now);
+                sapukaySynth.triggerAttackRelease("E5", "8n", now + 0.15);
+                sapukaySynth.triggerAttackRelease("A5", "4n", now + 0.3);
+                sapukaySynth.triggerAttackRelease("F#5", "8n", now + 0.7);
+                sapukaySynth.triggerAttackRelease("A5", "2n", now + 0.9);
+                showToast("¡¡¡SAPUKAY!!! 🤠🪗", "text-yellow-300");
+            } catch(e){}
+        }
+
+        function startBackgroundChamame() {
+            if (!soundEnabled || !accordionSynth) return;
+            stopBackgroundChamame();
+
+            // Melodía chamamecera inspirada en "Mi General Paz" (Úbeda - Chávez) en tiempo 3/4 (Chamamé)
+            const melody = [
+                { time: "0:0", note: ["A4", "C#5"], duration: "8n" },
+                { time: "0:1", note: ["E5", "A5"], duration: "8n" },
+                { time: "0:2", note: ["C#5", "E5"], duration: "8n" },
+                { time: "1:0", note: ["G4", "B4"], duration: "8n" },
+                { time: "1:1", note: ["D5", "G5"], duration: "8n" },
+                { time: "1:2", note: ["B4", "D5"], duration: "8n" },
+                { time: "2:0", note: ["A4", "C#5"], duration: "4n" },
+                { time: "2:2", note: ["E5", "A5"], duration: "8n" },
+                { time: "3:0", note: ["E4", "G#4"], duration: "8n" },
+                { time: "3:1", note: ["B4", "E5"], duration: "8n" },
+                { time: "3:2", note: ["G#4", "B4"], duration: "8n" },
+            ];
+
+            Tone.Transport.bpm.value = 128; // Ritmo clásico de Chamamé
+            bgMusicSequence = new Tone.Part((time, value) => {
+                accordionSynth.triggerAttackRelease(value.note, value.duration, time);
+            }, melody).start(0);
+
+            bgMusicSequence.loop = true;
+            bgMusicSequence.loopEnd = "4:0";
+            Tone.Transport.start();
+        }
+
+        function stopBackgroundChamame() {
+            if (bgMusicSequence) {
+                bgMusicSequence.stop();
+                bgMusicSequence.dispose();
+                bgMusicSequence = null;
+            }
+            Tone.Transport.stop();
         }
 
         function playSound(type) {
@@ -334,10 +386,6 @@
                     noiseSynth.triggerAttackRelease("8n", now);
                 } else if (type === 'powerup') {
                     polySynth.triggerAttackRelease(["E5", "A5", "C#6"], "16n", now);
-                } else if (type === 'chamame_jingle') {
-                    polySynth.triggerAttackRelease(["A4", "C#5", "E5"], "8n", now);
-                    polySynth.triggerAttackRelease(["A4", "D5", "F#5"], "8n", now + 0.12);
-                    polySynth.triggerAttackRelease(["E4", "G#4", "B4", "E5"], "4n", now + 0.24);
                 }
             } catch(e){}
         }
@@ -976,7 +1024,9 @@
                 }
             }, 1000);
 
-            playSound('chamame_jingle');
+            playSapukay();
+            startBackgroundChamame();
+
             cancelAnimationFrame(animationFrameId);
             gameLoop();
         }
@@ -984,6 +1034,7 @@
         function endGame() {
             gameState = 'GAMEOVER';
             clearInterval(timerInterval);
+            stopBackgroundChamame();
 
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('screen-gameover').classList.remove('hidden');
@@ -1006,8 +1057,6 @@
             document.getElementById('res-caught').innerText = caughtCount;
             document.getElementById('res-score').innerText = score;
             document.getElementById('res-combo').innerText = `x${maxCombo}`;
-
-            playSound('chamame_jingle');
         }
 
         // --- CONTROLES TECLADO Y TOUCH ---
@@ -1071,8 +1120,10 @@
             const btn = document.getElementById('btn-sound-toggle');
             if (soundEnabled) {
                 btn.innerHTML = `<i class="fa-solid fa-volume-high" id="sound-icon"></i> Sonido: ON`;
+                if (gameState === 'PLAYING') startBackgroundChamame();
             } else {
                 btn.innerHTML = `<i class="fa-solid fa-volume-xmark" id="sound-icon"></i> Sonido: OFF`;
+                stopBackgroundChamame();
             }
         });
 
