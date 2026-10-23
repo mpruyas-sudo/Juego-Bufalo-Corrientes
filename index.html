@@ -15,7 +15,7 @@
 
         html, body {
             height: 100%;
-            height: 100dvh; /* Usa dynamic viewport height para navegadores móviles */
+            height: 100dvh;
             margin: 0;
             padding: 0;
             overflow: hidden;
@@ -39,19 +39,19 @@
             position: relative;
             width: 100%;
             max-width: 800px;
-            max-height: 52dvh; /* Aumentado tamaño general del cuadro */
+            max-height: 50dvh;
             aspect-ratio: 4 / 3;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 0.2rem; /* Posiciona el cuadro más arriba */
-            margin-bottom: 2.2rem; /* Deja margen inferior para la superposición del D-Pad */
+            margin-top: 0.2rem;
+            margin-bottom: 5.5rem; /* Margen para albergar los controles sin pisar nada */
         }
 
         @media (min-height: 700px) {
             #game-container {
-                max-height: 58dvh;
+                max-height: 56dvh;
             }
         }
 
@@ -120,19 +120,19 @@
             box-shadow: 0 1px 0 #a16207;
         }
 
-        /* Escalado responsivo del D-Pad y ubicación montada sobre el cuadro */
+        /* Escalado responsivo del D-Pad y ubicación holgada debajo del cuadro */
         .dpad-container {
             position: absolute;
-            bottom: -5.5rem; /* Posicionado claramente debajo de la línea del borde dorado */
+            bottom: -5.5rem;
             z-index: 40;
-            width: 8rem;
-            height: 8rem;
+            width: 7.8rem;
+            height: 7.8rem;
         }
 
         @media (max-height: 650px) {
             .dpad-container {
-                width: 7rem;
-                height: 7rem;
+                width: 6.8rem;
+                height: 6.8rem;
                 bottom: -5.8rem;
             }
         }
@@ -155,11 +155,11 @@
             🤠 ¡ATRAPA EL BÚFALO EN GENERAL PAZ! 🐃
         </h1>
         <p class="text-[9px] sm:text-xs text-yellow-200 drop-shadow font-bold tracking-wider">
-            <i class="fa-solid fa-location-dot text-red-400"></i>Capital Provincial del Bufalo
+            <i class="fa-solid fa-location-dot text-red-400"></i> Corrientes (Caá Catí)
         </p>
     </header>
 
-    <!-- Contenedor del Juego / Canvas más arriba y más grande -->
+    <!-- Contenedor del Juego / Canvas -->
     <div id="game-container" class="relative rounded-2xl border-2 sm:border-4 border-yellow-600 bg-emerald-900">
         
         <!-- Canvas HTML5 -->
@@ -249,7 +249,7 @@
             </div>
         </div>
 
-        <!-- CONTROLES TÁCTILES SUPERPUESTOS SOBRE EL BORDE DE ABAJO DEL RECUADRO -->
+        <!-- CONTROLES TÁCTILES ABAJO DEL RECUADRO -->
         <div id="mobile-controls" class="grid grid-cols-3 gap-1 dpad-container">
             <div></div>
             <button id="btn-up" class="touch-btn"><i class="fa-solid fa-caret-up"></i></button>
@@ -270,9 +270,9 @@
 
     </div>
 
-    <!-- Referencia al pie del juego -->
-    <footer class="mt-auto py-1 text-center shrink-0">
-        <p class="text-[9px] text-gray-400 tracking-wide font-sans">Soft-IT by Lic. Mario Pruyas Jaime</p>
+    <!-- Referencia al pie del juego (subida justo debajo de los controles) -->
+    <footer class="py-1 text-center shrink-0 -mt-1 z-50">
+        <p class="text-[10px] text-gray-300 font-medium tracking-wide font-sans drop-shadow">Soft-IT by Lic. Mario Pruyas Jaime</p>
     </footer>
 
     <!-- LOGIC / GAME ENGINE JS -->
