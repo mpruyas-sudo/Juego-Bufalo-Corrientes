@@ -39,7 +39,7 @@
             position: relative;
             width: 100%;
             max-width: 800px;
-            max-height: 42dvh; /* Reducido para dejar espacio garantizado a los controles móviles */
+            max-height: 52dvh; /* Reducido para dejar espacio garantizado a los controles móviles */
             aspect-ratio: 4 / 3;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
@@ -50,7 +50,7 @@
 
         @media (min-height: 700px) {
             #game-container {
-                max-height: 50dvh;
+                max-height: 58dvh;
             }
         }
 
@@ -121,6 +121,8 @@
 
         /* Escalado responsivo del D-Pad según la altura de la pantalla */
         .dpad-container {
+            position: absolute;
+            bottom: 0.8rem; /* Superpone el D-Pad sobre el borde del recuadro */            
             width: 7.5rem;
             height: 7.5rem;
         }
