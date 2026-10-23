@@ -39,13 +39,14 @@
             position: relative;
             width: 100%;
             max-width: 800px;
-            max-height: 52dvh; /* Reducido para dejar espacio garantizado a los controles móviles */
+            max-height: 52dvh; /* Aumentado tamaño general del cuadro */
             aspect-ratio: 4 / 3;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: auto 0;
+            margin-top: 0.2rem; /* Posiciona el cuadro más arriba */
+            margin-bottom: 2.2rem; /* Deja margen inferior para la superposición del D-Pad */
         }
 
         @media (min-height: 700px) {
@@ -119,18 +120,20 @@
             box-shadow: 0 1px 0 #a16207;
         }
 
-        /* Escalado responsivo del D-Pad según la altura de la pantalla */
+        /* Escalado responsivo del D-Pad y ubicación montada sobre el cuadro */
         .dpad-container {
             position: absolute;
-            bottom: 0.8rem; /* Superpone el D-Pad sobre el borde del recuadro */            
-            width: 7.5rem;
-            height: 7.5rem;
+            bottom: -2.8rem; /* Montado directamente sobre la línea del borde inferior */
+            z-index: 40;
+            width: 8rem;
+            height: 8rem;
         }
 
         @media (max-height: 650px) {
             .dpad-container {
-                width: 6.5rem;
-                height: 6.5rem;
+                width: 7rem;
+                height: 7rem;
+                bottom: -2.4rem;
             }
         }
 
@@ -144,10 +147,10 @@
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between items-center p-1.5 text-white overflow-hidden select-none">
+<body class="h-screen w-screen flex flex-col justify-start items-center p-1.5 text-white overflow-hidden select-none">
 
     <!-- Header / Título Principal -->
-    <header class="text-center py-0.5 z-10 shrink-0">
+    <header class="text-center py-0.5 z-10 shrink-0 mb-0.5">
         <h1 class="text-base sm:text-2xl md:text-3xl font-extrabold text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide leading-tight">
             🤠 ¡ATRAPA EL BÚFALO EN GENERAL PAZ! 🐃
         </h1>
@@ -156,8 +159,8 @@
         </p>
     </header>
 
-    <!-- Contenedor del Juego / Canvas -->
-    <div id="game-container" class="relative rounded-2xl overflow-hidden border-2 sm:border-4 border-yellow-600 bg-emerald-900">
+    <!-- Contenedor del Juego / Canvas más arriba y más grande -->
+    <div id="game-container" class="relative rounded-2xl border-2 sm:border-4 border-yellow-600 bg-emerald-900">
         
         <!-- Canvas HTML5 -->
         <canvas id="gameCanvas" width="800" height="600"></canvas>
@@ -196,7 +199,7 @@
                 <h2 class="text-base sm:text-xl font-extrabold text-yellow-400 leading-tight">ATRAPA EL BÚFALO</h2>
                 <h3 class="text-[10px] sm:text-xs font-bold text-amber-300 mb-1.5 tracking-wide">Corrientes (Caá Catí)</h3>
 
-                <!-- Instrucciones breves con título más grande -->
+                <!-- Instrucciones breves -->
                 <div class="bg-black/40 text-left p-2 rounded-xl text-[9px] sm:text-xs text-emerald-100 space-y-0.5 mb-2 w-full border border-emerald-700 leading-tight">
                     <p class="font-bold text-yellow-300 border-b border-emerald-700 pb-0.5 text-xs sm:text-sm">¿Cómo jugar?</p>
                     <p>🟢 <b>Mover Gaucho:</b> Flechas / WASD / D-Pad.</p>
@@ -246,12 +249,8 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- CONTROLES TÁCTILES CENTRADOS Y OPTIMIZADOS PARA MÓVILES -->
-    <div id="mobile-controls" class="w-full max-w-[800px] shrink-0 flex justify-center items-center py-0.5">
-        <!-- D-Pad Directional con Botón de Lazo en el Centro -->
-        <div class="grid grid-cols-3 gap-1 dpad-container">
+        <!-- CONTROLES TÁCTILES SUPERPUESTOS SOBRE EL BORDE DE ABAJO DEL RECUADRO -->
+        <div id="mobile-controls" class="grid grid-cols-3 gap-1 dpad-container">
             <div></div>
             <button id="btn-up" class="touch-btn"><i class="fa-solid fa-caret-up"></i></button>
             <div></div>
@@ -268,10 +267,11 @@
             <button id="btn-down" class="touch-btn"><i class="fa-solid fa-caret-down"></i></button>
             <div></div>
         </div>
+
     </div>
 
     <!-- Referencia al pie del juego -->
-    <footer class="py-0.5 text-center shrink-0">
+    <footer class="mt-auto py-1 text-center shrink-0">
         <p class="text-[9px] text-gray-400 tracking-wide font-sans">Soft-IT by Lic. Mario Pruyas Jaime</p>
     </footer>
 
