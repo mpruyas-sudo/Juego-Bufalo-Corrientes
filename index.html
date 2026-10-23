@@ -234,7 +234,7 @@
                 <h3 class="text-sm sm:text-base font-bold text-yellow-400 font-retro mb-0.5">FIN DE LA YERRA</h3>
                 <p id="rank-title" class="text-xs sm:text-sm font-bold text-white drop-shadow mb-2">"Gauchos de Caá Catí"</p>
 
-                <div class="bg-emerald-950/80 w-full p-2 rounded-xl border border-emerald-700 mb-3 space-y-1 text-[10px] sm:text-xs font-retro">
+                <div class="bg-emerald-950/80 w-full p-2 rounded-xl border border-emerald-700 mb-2 space-y-1 text-[10px] sm:text-xs font-retro">
                     <div class="flex justify-between text-white font-bold">
                         <span>Búfalos Enlazados:</span>
                         <span id="res-caught" class="text-white font-extrabold">0</span>
@@ -247,6 +247,16 @@
                         <span>Mejor Combo:</span>
                         <span id="res-combo" class="text-white font-extrabold">x1</span>
                     </div>
+                </div>
+
+                <!-- BOTONES DE COMPARTIR RESULTADOS -->
+                <div class="w-full mb-3 flex gap-2 justify-center">
+                    <button id="btn-share-ws" class="flex-1 py-1.5 bg-green-600 hover:bg-green-500 text-white font-bold text-[10px] sm:text-xs rounded-lg border border-green-300 flex items-center justify-center gap-1.5 cursor-pointer shadow">
+                        <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                    </button>
+                    <button id="btn-share-x" class="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] sm:text-xs rounded-lg border border-slate-600 flex items-center justify-center gap-1.5 cursor-pointer shadow">
+                        <i class="fa-brands fa-x-twitter text-sm"></i> Compartir
+                    </button>
                 </div>
 
                 <button id="btn-restart" class="gold-btn w-full py-2 bg-yellow-500 hover:bg-yellow-400 text-emerald-950 font-bold text-xs sm:text-sm rounded-xl border-2 border-yellow-200 uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
@@ -292,7 +302,7 @@
         // Carga el archivo enganchados.mp3 de fondo
         const bgAudio = new Audio('enganchados.mp3');
         bgAudio.loop = true;
-        bgAudio.volume = 0.4;
+        bgAudio.volume = 0.5;
 
         function initAudio() {
             try {
@@ -319,7 +329,7 @@
         }
 
         // --- EFECTO SAPUKAY CORRENTINO ---
-        function playSapukay() {
+        function playSapukay(customText = "¡¡¡SAPUKAY!!! 🤠🪗") {
             if (!soundEnabled) return;
             try {
                 const now = Tone.now();
@@ -327,14 +337,14 @@
                     oscillator: { type: "sawtooth" },
                     envelope: { attack: 0.1, decay: 0.4, sustain: 0.7, release: 0.6 }
                 }).toDestination();
-                sapukaySynth.volume.value = -6;
+                sapukaySynth.volume.value = -5;
 
                 sapukaySynth.triggerAttackRelease("A4", "8n", now);
                 sapukaySynth.triggerAttackRelease("E5", "8n", now + 0.15);
                 sapukaySynth.triggerAttackRelease("A5", "4n", now + 0.3);
                 sapukaySynth.triggerAttackRelease("F#5", "8n", now + 0.7);
                 sapukaySynth.triggerAttackRelease("A5", "2n", now + 0.9);
-                showToast("¡¡¡SAPUKAY!!! 🤠🪗", "text-yellow-300");
+                showToast(customText, "text-yellow-300");
             } catch(e){}
         }
 
@@ -839,16 +849,19 @@
             combo++;
             if (combo > maxCombo) maxCombo = combo;
 
-            for (let i = 0; i < 12; i++) {
-                particles.push(new Particle(buffalo.x, buffalo.y, buffalo.color));
-            }
-
-            if (buffalo.type === 'golden') {
+            // DISPARAR SAPUKAY AL ALCANZAR EXACTAMENTE COMBO X3
+            if (combo === 3) {
+                playSapukay("¡¡¡SAPUKAY x3 COMBO!!! 🔥🤠");
+            } else if (buffalo.type === 'golden') {
                 playSound('gold_catch');
                 showToast(`¡LEYENDA DE CAÁ CATÍ! +${buffalo.points * (combo - 1)} PTS`, 'text-yellow-300');
             } else {
                 playSound('catch');
                 showToast(`¡ENLAZADO! +${buffalo.points * (combo - 1)}`, 'text-emerald-300');
+            }
+
+            for (let i = 0; i < 12; i++) {
+                particles.push(new Particle(buffalo.x, buffalo.y, buffalo.color));
             }
 
             buffaloes.splice(index, 1);
@@ -1028,6 +1041,20 @@
             document.getElementById('res-score').innerText = score;
             document.getElementById('res-combo').innerText = `x${maxCombo}`;
         }
+
+        // --- FUNCIONES DE COMPARTIR EN REDES ---
+        function shareWhatsApp() {
+            const text = `🤠 ¡Logré ${score} puntos atrapando ${caughtCount} búfalos en Caá Catí, General Paz! 🐃\n¿Podrás superarme chamigo? Juega aquí: ${window.location.href}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function shareX() {
+            const text = `🤠 ¡Hice ${score} puntos atrapando búfalos en Caá Catí, General Paz! 🐃 ¿Puedes superarme chamigo?`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`, '_blank');
+        }
+
+        document.getElementById('btn-share-ws').addEventListener('click', shareWhatsApp);
+        document.getElementById('btn-share-x').addEventListener('click', shareX);
 
         // --- CONTROLES TECLADO Y TOUCH ---
         window.addEventListener('keydown', (e) => {
